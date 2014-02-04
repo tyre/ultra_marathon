@@ -4,6 +4,12 @@ Fault tolerant platform for long running jobs.
 
 ## Usage
 
+`gem install ultra_marathon`
+
+or with bundler:
+
+`gem 'ultra_marathon'`
+
 The `UltraMarathon::AbstractRunner` class itself provides the functionality for
 running complex jobs. It is best inheirited to fully customize.
 
