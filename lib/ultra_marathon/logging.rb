@@ -1,8 +1,8 @@
 require 'forwardable'
-require 'marathon/logger'
+require 'ultra_marathon/logger'
 require 'active_support/concern'
 
-module Marathon
+module UltraMarathon
   module Logging
     extend ActiveSupport::Concern
 

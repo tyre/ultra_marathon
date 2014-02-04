@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Marathon::Store do
+describe UltraMarathon::Store do
   let(:runner_class) do
     anonymous_test_class do
       attr_accessor :success, :name

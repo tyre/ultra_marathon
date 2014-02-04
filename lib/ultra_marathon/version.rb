@@ -1,4 +1,4 @@
-module Marathon
+module UltraMarathon
   class Version
     MAJOR = 0 unless defined? MAJOR
     MINOR = 0 unless defined? MINOR

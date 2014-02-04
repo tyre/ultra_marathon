@@ -1,9 +1,9 @@
 require 'spec_helper'
 
-describe Marathon::Instrumentation do
+describe UltraMarathon::Instrumentation do
   let(:test_class) do
     anonymous_test_class do
-      include Marathon::Instrumentation
+      include UltraMarathon::Instrumentation
 
       def run(&block)
         instrument { block.call }

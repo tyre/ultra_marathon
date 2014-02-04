@@ -1,7 +1,7 @@
 require 'spec_helper'
 
-describe Marathon::AbstractRunner do
-  let(:test_class) { anonymous_test_class(Marathon::AbstractRunner) }
+describe UltraMarathon::AbstractRunner do
+  let(:test_class) { anonymous_test_class(UltraMarathon::AbstractRunner) }
   let(:test_instance) { test_class.new }
 
   describe '#run!' do

@@ -1,9 +1,9 @@
 require 'spec_helper'
 
-describe Marathon::Logging do
+describe UltraMarathon::Logging do
   let(:test_class) do
     anonymous_test_class do
-      include Marathon::Logging
+      include UltraMarathon::Logging
     end
   end
 
@@ -30,8 +30,8 @@ describe Marathon::Logging do
   end
 
   describe '.logger' do
-    it 'defaults to the Marathon::Logger class' do
-      test_instance.logger.should be_a Marathon::Logger
+    it 'defaults to the UltraMarathon::Logger class' do
+      test_instance.logger.should be_a UltraMarathon::Logger
     end
   end
 end

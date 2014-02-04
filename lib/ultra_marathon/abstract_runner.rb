@@ -1,10 +1,10 @@
-require 'marathon/callbacks'
-require 'marathon/instrumentation'
-require 'marathon/logging'
-require 'marathon/sub_runner'
-require 'marathon/store'
+require 'ultra_marathon/callbacks'
+require 'ultra_marathon/instrumentation'
+require 'ultra_marathon/logging'
+require 'ultra_marathon/sub_runner'
+require 'ultra_marathon/store'
 
-module Marathon
+module UltraMarathon
   class AbstractRunner
     include Logging
     include Instrumentation

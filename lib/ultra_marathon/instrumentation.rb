@@ -1,4 +1,4 @@
-module Marathon
+module UltraMarathon
   module Instrumentation
     TIME_FORMAT = "%02d:%02d:%02d"
     attr_reader :start_time, :end_time

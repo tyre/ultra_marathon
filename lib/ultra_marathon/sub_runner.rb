@@ -1,9 +1,9 @@
 require 'set'
 require 'active_support/core_ext/proc'
-require 'marathon/callbacks'
-require 'marathon/logging'
+require 'ultra_marathon/callbacks'
+require 'ultra_marathon/logging'
 
-module Marathon
+module UltraMarathon
   class SubRunner
     include Callbacks
     include Logging

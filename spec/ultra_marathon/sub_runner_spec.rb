@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Marathon::SubRunner do
+describe UltraMarathon::SubRunner do
   let(:test_class) do
     anonymous_test_class do
       attr_writer :bubble_count

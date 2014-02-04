@@ -1,7 +1,7 @@
 require 'set'
 require 'forwardable'
 
-module Marathon
+module UltraMarathon
   class Store
     include Enumerable
     extend Forwardable

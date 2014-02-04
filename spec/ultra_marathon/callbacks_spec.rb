@@ -1,9 +1,9 @@
 require 'spec_helper'
 
-describe Marathon::Callbacks do
+describe UltraMarathon::Callbacks do
   let(:test_class) do
     anonymous_test_class do
-      include Marathon::Callbacks
+      include UltraMarathon::Callbacks
       attr_writer :bubble_count
       callbacks :before_bubbles, :after_bubbles, :on_error
 

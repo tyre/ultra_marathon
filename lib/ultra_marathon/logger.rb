@@ -1,6 +1,6 @@
 require 'forwardable'
 
-module Marathon
+module UltraMarathon
   class Logger
     extend Forwardable
     NEW_LINE = "\n".freeze

@@ -2,7 +2,7 @@ require 'set'
 require 'active_support/concern'
 require 'active_support/core_ext/proc'
 
-module Marathon
+module UltraMarathon
   module Callbacks
     extend ActiveSupport::Concern
 
