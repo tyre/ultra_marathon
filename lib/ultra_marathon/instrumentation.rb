@@ -27,11 +27,12 @@ module UltraMarathon
     end
 
     private
+
+    ## Private Instance Methods
+
     def format_time(time)
       sprintf(TIME_FORMAT, time.hour, time.min, time.sec)
     end
-
-    ## Private Instance Methods
 
     # Instruments given block, setting its start time and end time
     # Returns the result of the block
