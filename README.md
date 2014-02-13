@@ -89,8 +89,8 @@ The basic flow of execution is as follows:
 
 - `before_run`
 - (`run!`)
+  - `on_error`
 - `after_run`
-- `after_all`
 - (`reset`)
 - `on_reset`
 
@@ -127,8 +127,8 @@ Callbacks can, additionally, take a hash of options. Currently `:if` and
 
 ```ruby
 class MercurialRunner < UltraMarathon::AbstractRunner
-  after_all :celebrate, :if => :success?
-  after_all :cry, unless: ->{ success? }
+  after_run :celebrate, :if => :success?
+  after_run :cry, unless: ->{ success? }
 
   run do
     raise 'hell' if rand(2) % 2 == 0

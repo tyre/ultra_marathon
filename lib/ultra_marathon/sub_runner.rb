@@ -10,8 +10,8 @@ module UltraMarathon
     attr_accessor :run_block, :success
     attr_reader :sub_context, :options, :name
 
-    callbacks :before_run, :after_run, :after_all, :on_error, :on_reset
-    after_all :log_header_and_sub_context
+    callbacks :before_run, :after_run, :on_error, :on_reset
+    after_run :log_header_and_sub_context
 
     on_error lambda { self.success = false }
     on_error lambda { |error| logger.error error }
@@ -33,7 +33,7 @@ module UltraMarathon
       rescue StandardError => error
         invoke_on_error_callbacks(error)
       ensure
-        invoke_after_all_callbacks
+        invoke_after_run_callbacks
       end
     end
 

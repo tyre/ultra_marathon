@@ -10,9 +10,9 @@ module UltraMarathon
     include Instrumentation
     include Callbacks
     attr_accessor :success
-    callbacks :before_run, :after_run, :after_all, :on_error, :on_reset
+    callbacks :before_run, :after_run, :on_error, :on_reset
 
-    after_all :write_log
+    after_run :write_log
     on_error lambda { self.success = false }
     on_error lambda { |error| logger.error(error) }
 
@@ -26,11 +26,10 @@ module UltraMarathon
           invoke_before_run_callbacks
           instrument { run_unrun_sub_runners }
           self.success = failed_sub_runners.empty?
-          invoke_after_run_callbacks
         rescue StandardError => error
           invoke_on_error_callbacks(error)
         ensure
-          invoke_after_all_callbacks
+          invoke_after_run_callbacks
         end
         self
       end
