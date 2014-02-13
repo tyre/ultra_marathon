@@ -81,12 +81,13 @@ module UltraMarathon
       define_singleton_method :call, &run_block.bind(self)
     end
 
-    # If the original context responds, delegate to it
+    # If the original context responds, including private methods,
+    # delegate to it
     def method_missing(method, *args, &block)
-      if context.respond_to? method
+      if context.respond_to?(method, true)
         context.send(method, *args, &block)
       else
-        super
+        raise NoMethodError.new("undefined local variable or method `#{method.to_s}' for #{context.class.name}")
       end
     end
   end

@@ -9,6 +9,8 @@ describe UltraMarathon::SubRunner do
         @bubble_count ||= 0
       end
 
+      private
+
       def increment_bubbles
         self.bubble_count += 1
       end
