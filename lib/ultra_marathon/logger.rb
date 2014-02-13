@@ -55,7 +55,7 @@ module UltraMarathon
       formatted_backtrace = error.backtrace.map.with_index do |backtrace_line, line_number|
         sprintf('%03i) %s', line_number, backtrace_line)
       end
-      info formatted_backtrace.join("\n")
+      info formatted_backtrace.join(NEW_LINE)
     end
   end
 end
