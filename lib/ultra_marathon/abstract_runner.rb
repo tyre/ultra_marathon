@@ -24,7 +24,7 @@ module UltraMarathon
         begin
           self.success = true
           invoke_before_run_callbacks
-          instrument { run_unrun_sub_runners }
+          instrument(:run_unrun_sub_runners) { run_unrun_sub_runners }
           self.success = failed_sub_runners.empty?
         rescue StandardError => error
           invoke_on_error_callbacks(error)
@@ -180,12 +180,13 @@ module UltraMarathon
     end
 
     def summary
+      run_instrumentation = instrumentations[:run_unrun_sub_runners]
       """
 
       Status: #{status}
-      Start Time: #{formatted_start_time}
-      End Time: #{formatted_end_time}
-      Total Time: #{formatted_total_time}
+      Run Start Time: #{run_instrumentation.formatted_start_time}
+      End Time: #{run_instrumentation.formatted_end_time}
+      Total Time: #{run_instrumentation.formatted_total_time}
 
       Successful SubRunners: #{successful_sub_runners.size}
       Failed SubRunners: #{failed_sub_runners.size}
