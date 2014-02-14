@@ -18,7 +18,7 @@ running complex jobs. It is best inheirited to fully customize.
 A simple DSL, currently consisting of only the `run` command, are used to
 specify independent chunks of work. The first argument is the name of the run
 block. Omitted, this defaults to ':main', though names must be unique within a
-given Runner so for a runner with N run blocks, N - 1 must be manually named.
+given Runner. E.g. for a runner with N run blocks, N - 1 must be manually named.
 
 ```ruby
 class MailRunner < UltraMarathon::AbstractRunner
@@ -29,10 +29,17 @@ class MailRunner < UltraMarathon::AbstractRunner
   end
 
   # :eat run block
+  # Must be named because there is already a :main block (one without
+  # a name explicitly defined)
   run :eat do
     add_butter
     add_syrup
     eat!
+  end
+
+  # Will throw an error, since the first runner is implicitly named :main
+  run :main do
+    puts 'nope nope nope!'
   end
 
   # Omitted for brevity
@@ -137,6 +144,19 @@ class MercurialRunner < UltraMarathon::AbstractRunner
 end
 ```
 
+### Instrumentation
+
+The entire `run!` is instrumented and logged automatically. Additionally,
+individual run blocks are instrumented and logged by default.
+
+You can also choose to not instrument a block:
+
+```ruby
+run :embarrassingly_slowly, instrument: false do
+  sleep(rand(10))
+end
+```
+
 ### Success, Failure, and Reseting
 
 If any part of a runner fails, either by raising an error or explicitly setting
@@ -144,8 +164,10 @@ If any part of a runner fails, either by raising an error or explicitly setting
 which rely on an unsuccessful run block will also be considered failed.
 
 A failed runner can be reset, which essentially changes the failed runners to
-being unrun and returns the success flag to true. It will then execute any
-`on_reset` callbacks before returning itself.
+being unrun and returns the success flag to true. Runners that have been
+successfully run _will not_ be rerun, though any failed dependencies will.
+
+The runner will then execute any `on_reset` callbacks before returning itself.
 
 ```ruby
 class WatRunner < UltraMarathon::AbstractRunner
