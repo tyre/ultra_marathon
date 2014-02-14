@@ -50,5 +50,22 @@ describe UltraMarathon::SubRunner do
         test_instance.logger.contents.should include 'Draws those who are willing, drags those who are not.'
       end
     end
+
+    describe 'instrumentation' do
+      it 'should log the total time' do
+        subject
+        test_instance.logger.contents.should include 'Total Time:'
+      end
+
+      describe 'when instrument: false is set' do
+        let(:options) do
+          { context: context, name: name, instrument: false }
+        end
+
+        it 'should not log total time' do
+          test_instance.logger.contents.should_not include 'Total Time:'
+        end
+      end
+    end
   end
 end

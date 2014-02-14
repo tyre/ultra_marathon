@@ -1,11 +1,13 @@
 require 'set'
 require 'active_support/core_ext/proc'
 require 'ultra_marathon/callbacks'
+require 'ultra_marathon/instrumentation'
 require 'ultra_marathon/logging'
 
 module UltraMarathon
   class SubRunner
     include Callbacks
+    include Instrumentation
     include Logging
     attr_accessor :run_block, :success
     attr_reader :sub_context, :options, :name
@@ -22,18 +24,32 @@ module UltraMarathon
     # other class, but do other things (like log) in the context of this one.
     def initialize(options, run_block)
       @name = options[:name]
-      @options = options
+      @options = {
+        instrument: true
+      }.merge(options)
       @sub_context = SubContext.new(options[:context], run_block)
     end
 
     def run!
-      begin
-        self.success = true
-        run_sub_context
-      rescue StandardError => error
-        invoke_on_error_callbacks(error)
-      ensure
-        invoke_after_run_callbacks
+      instrument(:run) do
+        begin
+          self.success = true
+          run_sub_context
+        rescue StandardError => error
+          invoke_on_error_callbacks(error)
+        ensure
+          invoke_after_run_callbacks
+        end
+      end
+      log_instrumentation
+    end
+
+    def log_instrumentation
+      if options[:instrument]
+        run_profile = instrumentations[:run]
+        logger.info """
+        Total Time: #{run_profile.formatted_total_time}
+        """
       end
     end
 
@@ -72,14 +88,11 @@ module UltraMarathon
 
   class SubContext
     include Logging
-    attr_reader :context, :run_block, :options
+    attr_reader :context, :run_block
 
-    def initialize(context, run_block, options={})
+    def initialize(context, run_block)
       @context = context
       @run_block = run_block
-      @options = {
-        instrument: true
-      }.merge(options)
       # Ruby cannot marshal procs or lambdas, so we need to define a method.
       # Binding to self allows us to intercept logging calls.
       define_singleton_method(:call, &bound_block)
