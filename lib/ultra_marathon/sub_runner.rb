@@ -92,14 +92,9 @@ module UltraMarathon
 
     def initialize(context, run_block)
       @context = context
-      @run_block = run_block
       # Ruby cannot marshal procs or lambdas, so we need to define a method.
       # Binding to self allows us to intercept logging calls.
-      define_singleton_method(:call, &bound_block)
-    end
-
-    def bound_block
-      run_block.bind(self)
+      define_singleton_method(:call, &run_block.bind(self))
     end
 
     # If the original context responds, including private methods,

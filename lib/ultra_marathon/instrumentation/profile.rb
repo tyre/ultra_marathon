@@ -7,13 +7,17 @@ module UltraMarathon
 
       def initialize(name, &block)
         @name = name
-        @instrument_block = block
+        # Ruby cannot marshal procs or lambdas, so we need to define a method.
+        # Binding to self allows us to intercept logging calls.
+        define_singleton_method :instrumentated_block do
+          block.call
+        end
       end
 
       def call
         @start_time = Time.now
         begin
-          return_value = instrument_block.call
+          return_value = instrumentated_block
         ensure
           @end_time = Time.now
         end
