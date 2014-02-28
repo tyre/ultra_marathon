@@ -25,7 +25,7 @@ module UltraMarathon
     def initialize(options, run_block)
       @name = options[:name]
       @options = {
-        instrument: true
+        instrument: false
       }.merge(options)
       @sub_context = SubContext.new(options[:context], run_block)
     end
@@ -48,6 +48,8 @@ module UltraMarathon
       if options[:instrument]
         run_profile = instrumentations[:run]
         logger.info """
+        End Time: #{run_profile.formatted_end_time}
+        Start Time: #{run_profile.formatted_start_time}
         Total Time: #{run_profile.formatted_total_time}
         """
       end
@@ -69,7 +71,6 @@ module UltraMarathon
     def run_sub_context
       invoke_before_run_callbacks
       sub_context.call
-      invoke_after_run_callbacks
     end
 
     def log_header_and_sub_context

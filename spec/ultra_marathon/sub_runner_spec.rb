@@ -52,6 +52,10 @@ describe UltraMarathon::SubRunner do
     end
 
     describe 'instrumentation' do
+      let(:options) do
+        { context: context, name: name, instrument: true }
+      end
+
       it 'should log the total time' do
         subject
         test_instance.logger.contents.should include 'Total Time:'
@@ -65,6 +69,27 @@ describe UltraMarathon::SubRunner do
         it 'should not log total time' do
           test_instance.logger.contents.should_not include 'Total Time:'
         end
+      end
+    end
+
+    describe 'callbacks' do
+      it 'should invoke before_run callbacks once' do
+        expect(test_instance).to receive(:invoke_before_run_callbacks).once
+        subject
+      end
+
+      it 'should invoke after_run callbacks once' do
+        expect(test_instance).to receive(:invoke_after_run_callbacks).once
+        subject
+      end
+
+      it 'should invoke before_run callbacks, the subcontext, then after_run callbacks' do
+        sub_context = double(:sub_context)
+        test_instance.stub(:sub_context) { sub_context }
+        expect(test_instance).to receive(:invoke_before_run_callbacks).ordered
+        expect(sub_context).to receive(:call).ordered
+        expect(test_instance).to receive(:invoke_after_run_callbacks).ordered
+        subject
       end
     end
   end
