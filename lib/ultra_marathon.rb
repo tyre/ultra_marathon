@@ -1,3 +1,4 @@
+require 'core_ext/proc'
 require 'ultra_marathon/abstract_runner'
 require 'ultra_marathon/callbacks'
 require 'ultra_marathon/instrumentation'

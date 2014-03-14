@@ -1,6 +1,6 @@
 require 'set'
 require 'active_support/concern'
-require 'active_support/core_ext/proc'
+require 'core_ext/proc'
 
 module UltraMarathon
   module Callbacks

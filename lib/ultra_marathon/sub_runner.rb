@@ -1,5 +1,5 @@
 require 'set'
-require 'active_support/core_ext/proc'
+require 'core_ext/proc'
 require 'ultra_marathon/callbacks'
 require 'ultra_marathon/instrumentation'
 require 'ultra_marathon/logging'
