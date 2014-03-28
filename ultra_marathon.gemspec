@@ -5,7 +5,7 @@ require 'ultra_marathon/version'
 
 Gem::Specification.new do |spec|
   spec.authors     = ['Chris Maddox']
-  spec.date        = '2013-10-02'
+  spec.date        = '2013-03-27'
   spec.description = 'Managing long running processes.'
   spec.email       = 'tyre77@gmail.com'
   spec.files       = %w(LICENSE.md README.md ultra_marathon.gemspec)
