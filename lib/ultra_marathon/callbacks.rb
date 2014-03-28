@@ -107,7 +107,7 @@ module UltraMarathon
       def inherited(base)
         base.send(:callbacks, *_callback_names)
         _callback_names.each do |callback_name|
-          parent_callbacks = send :"#{callback_name}_callbacks"
+          parent_callbacks = send(:"#{callback_name}_callbacks").dup
           base.instance_variable_set(:"@#{callback_name}_callbacks", parent_callbacks)
         end
       end
