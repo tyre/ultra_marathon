@@ -1,7 +1,7 @@
 module UltraMarathon
   module Instrumentation
     class Profile
-      attr_reader :name, :instrument_block, :start_time, :end_time
+      attr_reader :name, :start_time, :end_time
 
       ## Public Instance Methods
 
@@ -9,7 +9,7 @@ module UltraMarathon
         @name = name
         # Ruby cannot marshal procs or lambdas, so we need to define a method.
         # Binding to self allows us to intercept logging calls.
-        define_singleton_method :instrumentated_block do
+        define_singleton_method :instrumented_block do
           block.call
         end
       end
@@ -17,7 +17,7 @@ module UltraMarathon
       def call
         @start_time = Time.now
         begin
-          return_value = instrumentated_block
+          return_value = instrumented_block
         ensure
           @end_time = Time.now
         end
