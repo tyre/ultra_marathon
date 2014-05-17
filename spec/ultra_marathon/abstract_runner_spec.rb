@@ -41,6 +41,15 @@ describe UltraMarathon::AbstractRunner do
           test_instance.success.should_not be
         end
       end
+
+      context 'when the run block explicitly sets success' do
+        let(:run_block) { Proc.new { self.success = false } }
+
+        it 'should not override it' do
+          subject
+          test_instance.success.should_not be
+        end
+      end
     end
 
     describe 'with multiple run blocks' do
@@ -148,10 +157,10 @@ describe UltraMarathon::AbstractRunner do
   end
 
   describe '#reset' do
-    it 'should change success to true' do
+    it 'should change success to nil' do
       test_instance.success = false
       test_instance.reset
-      test_instance.success.should be
+      test_instance.success.should be_nil
     end
 
     it 'returns itself' do

@@ -22,10 +22,11 @@ module UltraMarathon
     def run!
       if self.class.run_blocks.any?
         begin
-          self.success = true
+          self.success = nil
           invoke_before_run_callbacks
           instrument(:run_unrun_sub_runners) { run_unrun_sub_runners }
-          self.success = failed_sub_runners.empty?
+          # If any of the sub runners explicitly set the success flag, don't override it
+          self.success = failed_sub_runners.empty? if self.success.nil?
         rescue StandardError => error
           invoke_on_error_callbacks(error)
         ensure
@@ -43,7 +44,7 @@ module UltraMarathon
     # sets the unrun sub_runners to be the uncompleted/failed ones
     def reset
       reset_failed_runners
-      @success = true
+      @success = nil
       invoke_on_reset_callbacks
       self
     end
