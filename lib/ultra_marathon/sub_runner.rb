@@ -3,14 +3,15 @@ require 'core_ext/proc'
 require 'ultra_marathon/callbacks'
 require 'ultra_marathon/instrumentation'
 require 'ultra_marathon/logging'
+require 'ultra_marathon/sub_context'
 
 module UltraMarathon
   class SubRunner
     include Callbacks
     include Instrumentation
     include Logging
-    attr_accessor :run_block, :success
-    attr_reader :sub_context, :options, :name
+    attr_accessor :success
+    attr_reader :options, :name, :run_block_or_sub_context
 
     callbacks :before_run, :after_run, :on_error, :on_reset
     after_run :log_header_and_sub_context
@@ -22,12 +23,12 @@ module UltraMarathon
     # SubRunner in context of itself.
     # SubContext is necessary because we want to run in the context of the
     # other class, but do other things (like log) in the context of this one.
-    def initialize(options, run_block)
+    def initialize(options, run_block_or_sub_context)
+      @run_block_or_sub_context = run_block_or_sub_context
       @name = options[:name]
       @options = {
         instrument: false
       }.merge(options)
-      @sub_context = SubContext.new(options[:context], run_block)
     end
 
     def run!
@@ -68,6 +69,16 @@ module UltraMarathon
 
     private
 
+    def sub_context
+      @sub_context = begin
+        if run_block_or_sub_context.is_a? SubContext
+          run_block_or_sub_context
+        else
+          SubContext.new(options[:context], &run_block)
+        end
+      end
+    end
+
     def run_sub_context
       invoke_before_run_callbacks
       sub_context.call
@@ -84,28 +95,6 @@ module UltraMarathon
 
     def log_header
       "Running '#{name}' SubRunner"
-    end
-  end
-
-  class SubContext
-    include Logging
-    attr_reader :context, :run_block
-
-    def initialize(context, run_block)
-      @context = context
-      # Ruby cannot marshal procs or lambdas, so we need to define a method.
-      # Binding to self allows us to intercept logging calls.
-      define_singleton_method(:call, &run_block.bind(self))
-    end
-
-    # If the original context responds, including private methods,
-    # delegate to it
-    def method_missing(method, *args, &block)
-      if context.respond_to?(method, true)
-        context.send(method, *args, &block)
-      else
-        raise NoMethodError.new("undefined local variable or method `#{method.to_s}' for #{context.class.name}")
-      end
     end
   end
 end
