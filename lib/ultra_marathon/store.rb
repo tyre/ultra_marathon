@@ -21,6 +21,10 @@ module UltraMarathon
     end
     alias_method :add, :<<
 
+    def merge(other_store)
+      self.store.merge!(other_store.store)
+    end
+
     def each(&block)
       runners.each(&block)
     end
@@ -64,16 +68,21 @@ module UltraMarathon
       end
     end
 
+    protected
+
+    ## Protected Instance Methods
+
+    # allow access for another store for merging
+    def store
+      @store ||= Hash.new
+    end
+
     private
 
     ## Private Instance Methods
 
     def runners
       store.values
-    end
-
-    def store
-      @store ||= Hash.new
     end
   end
 end

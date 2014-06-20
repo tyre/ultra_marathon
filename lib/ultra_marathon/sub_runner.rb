@@ -70,11 +70,11 @@ module UltraMarathon
     private
 
     def sub_context
-      @sub_context = begin
+      @sub_context ||= begin
         if run_block_or_sub_context.is_a? SubContext
           run_block_or_sub_context
         else
-          SubContext.new(options[:context], &run_block)
+          SubContext.new(options[:context], &run_block_or_sub_context)
         end
       end
     end

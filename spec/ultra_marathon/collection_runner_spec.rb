@@ -21,10 +21,20 @@ describe UltraMarathon::CollectionRunner do
           sub_log = "Chillin with homie #{item}\n"
           test_instance.logger.contents.should include sub_log
         end
-        ap test_instance.logger.contents
+      end
+
+      context 'when individual elements blow up' do
+        let(:collection) { [1,2,3,4,5] }
+
+        let(:run_block) do
+          proc { |item| raise 'hell' if item % 2 == 0 }
+        end
+
+        it 'should not raise an error and set success to false' do
+          expect { run_collection }.to_not raise_error
+          test_instance.success.should be false
+        end
       end
     end
-
-    context 'with instrument: true'
   end
 end

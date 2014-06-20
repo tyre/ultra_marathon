@@ -20,7 +20,11 @@ module UltraMarathon
       # is set to be the instance variable. Otherwise returns it, defaulting
       # to the included Logger class
       def logger_class
-        @logger_class ||= (@logger_class.try_call || Logger)
+        if @logger_class.respond_to? :call
+          @logger_class = @logger_class.call
+        else
+          @logger_class ||= Logger
+        end
       end
 
       ## Private Class Methods

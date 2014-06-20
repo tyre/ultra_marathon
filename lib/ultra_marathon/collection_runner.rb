@@ -1,10 +1,13 @@
+require 'ultra_marathon/base_runner'
 require 'ultra_marathon/store'
-require 'ultra_marathon/logging'
 require 'ultra_marathon/sub_context'
+require 'ultra_marathon/sub_runner'
+
 module UltraMarathon
-  class CollectionRunner
-    include Logging
+  class CollectionRunner < BaseRunner
     attr_reader :collection, :options, :run_block
+
+    after_run :write_logs
 
     # Takes a collection, each of which will be run in its own subrunner. The collection
     # Also takes a number of options:
@@ -26,31 +29,88 @@ module UltraMarathon
       @collection, @run_block = collection, run_block
       @options = {
         sub_name: proc { |index| :"#{options[:name]}__#{index}" },
-        sub_runner: UltraMarathon::SubRunner,
+        sub_runner: SubRunner,
         iterator:   :each
       }.merge(options)
-      initialize_sub_runners
+    end
+
+    def unrun_sub_runners
+      @unrun_sub_runners ||= begin
+        store = Store.new
+        index = 0
+        collection.send(options[:iterator]) do |item|
+          this_index = index
+          index += 1
+          store << new_item_sub_runner(item, this_index)
+        end
+        store
+      end
+    end
+
+    # Set of all sub runners that should be run before this one.
+    # This class cannot do anything with this information, but it is useful
+    # to the enveloping runner.
+    def parents
+      @parents ||= Set.new(options[:requires])
+    end
+
+    private
+
+    def write_logs
+      log_header
+      log_failed_sub_runners if failed_sub_runners.any?
+      log_successful_sub_runners if successful_sub_runners.any?
+      log_summary
+    end
+
+    def log_summary
+      run_profile = instrumentations[:run!]
+      """
+
+      Status: #{status}
+      Run Start Time: #{run_instrumentation.formatted_start_time}
+      End Time: #{run_instrumentation.formatted_end_time}
+      Total Time: #{run_instrumentation.formatted_total_time}
+
+      Failed: #{failed_sub_runners.size}
+      Successful: #{successful_sub_runners.size}
+
+      """
+    end
+
+    def log_header
+      logger.info """
+
+      Running Collection #{options[:name]}
+
+      """
+    end
+
+    def status
+      if success?
+        'Success'
+      else
+        'Failure'
+      end
+    end
+
+    def log_failed_sub_runners
+      log_sub_runners(failed_sub_runners)
+    end
+
+    def log_successful_sub_runners
+      log_sub_runners(successful_sub_runners)
+    end
+
+    def log_sub_runners(sub_runners)
+      sub_runners.each do |sub_runner|
+        logger.info(sub_runner.logger.contents << "\n")
+      end
     end
 
     # Cache the sub runner class
     def sub_runner_class
       @individual_runner_class ||= options[:sub_runner].try_call
-    end
-
-    def run!
-      sub_runners.each(&:run!)
-      combined_logs = sub_runners.map { |sub_runner| sub_runner.logger.contents }.join("\n")
-      logger.info(combined_logs)
-      self
-    end
-
-    def initialize_sub_runners
-      index = 0
-      collection.send(options[:iterator]) do |item|
-        this_index = index
-        index += 1
-        sub_runners << new_item_sub_runner(item, this_index)
-      end
     end
 
     def new_item_sub_runner(item, index)
@@ -69,10 +129,6 @@ module UltraMarathon
 
     def sub_runner_item_options(item, index)
       sub_runner_base_options.merge(name: options[:sub_name].try_call(index))
-    end
-
-    def sub_runners
-      @sub_runners ||= Store.new
     end
 
     def build_item_sub_context(item, options)

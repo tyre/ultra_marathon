@@ -1,7 +1,7 @@
 module UltraMarathon
   class SubContext
     include Logging
-    attr_reader :__context, :__run_block
+    attr_reader :__context
 
     def initialize(context, &run_block)
       @__context = context
