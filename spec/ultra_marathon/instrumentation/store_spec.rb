@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'rspec/mocks'
 
 describe UltraMarathon::Instrumentation::Store do
 
