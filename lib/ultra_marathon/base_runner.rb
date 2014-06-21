@@ -10,6 +10,10 @@ module UltraMarathon
     include Callbacks
 
     attr_accessor :success
+    attr_memo_accessor :threaded_runners, -> { [] }
+    attr_memo_reader :successful_sub_runners, -> { Store.new }
+    attr_memo_reader :failed_sub_runners, -> { Store.new }
+
     callbacks :before_run, :after_run, :on_error, :on_reset
 
     ## Public Instance Methods
@@ -46,18 +50,6 @@ module UltraMarathon
       self
     end
 
-
-    # Stores sub runners which ran and were a success
-    def successful_sub_runners
-      @successful_sub_runners ||= Store.new
-    end
-
-    # Stores sub runners which ran and failed
-    # Also store children of those which failed
-    def failed_sub_runners
-      @failed_sub_runners ||= Store.new
-    end
-
     def run_instrumentation
       instrumentations[RUN_INSTRUMENTATION_NAME]
     end
@@ -73,19 +65,31 @@ module UltraMarathon
     def run_unrun_sub_runners
       unrun_sub_runners.each do |sub_runner|
         if sub_runner_can_run? sub_runner
-          run_sub_runner(sub_runner)
+          run_sub_runner sub_runner
         elsif sub_runner.parents.any? { |name| failed_sub_runners.exists? name }
           failed_sub_runners << sub_runner
           unrun_sub_runners.delete sub_runner.name
         end
       end
+      clean_up_threaded_runners if threaded_runners.any?
       run_unrun_sub_runners unless complete?
     end
 
-    # Runs the sub runner, adding it to the appropriate sub runner store based
-    # on its success or failure and removes it from the unrun_sub_runners
+    # Either explicitly runs the sub runner or, if it is threaded, starts its
+    # thread
     def run_sub_runner(sub_runner)
-      sub_runner.run!
+      if sub_runner.threaded?
+        self.threaded_runners << sub_runner.run_thread
+      else
+        sub_runner.run!
+        clean_up_sub_runner(sub_runner)
+      end
+    end
+
+    # Adds a run sub runner to the appropriate sub runner store based
+    # on its success or failure and removes it from the unrun_sub_runners
+    # Also merges its instrumentation to the group's instrumentation
+    def clean_up_sub_runner(sub_runner)
       if sub_runner.success
         successful_sub_runners << sub_runner
       else
@@ -95,9 +99,18 @@ module UltraMarathon
       unrun_sub_runners.delete sub_runner.name
     end
 
+    # Cleans up all dead threads, settings
+    def clean_up_threaded_runners
+      alive_threads, dead_threads = threaded_runners.partition(&:alive?)
+      dead_threads.each do |thread|
+        clean_up_sub_runner(thread.value)
+      end
+      self.threaded_runners = alive_threads
+    end
+
     ## TODO: timeout option
     def complete?
-      unrun_sub_runners.empty?
+      self.threaded_runners.empty? && unrun_sub_runners.empty?
     end
 
     # Resets all failed sub runners, then sets them as

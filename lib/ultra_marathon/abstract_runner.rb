@@ -4,7 +4,6 @@ require 'ultra_marathon/store'
 
 module UltraMarathon
   class AbstractRunner < BaseRunner
-
     after_run :write_log
     on_error lambda { self.success = false }
     on_error lambda { |error| logger.error(error) }
@@ -14,6 +13,7 @@ module UltraMarathon
     ## Private Class Methods
 
     class << self
+      attr_memo_reader :run_blocks, -> { Hash.new }
 
       # This is where the magic happens.
       # Called in the class context, it will be safely executed in
@@ -47,10 +47,6 @@ module UltraMarathon
         else
           raise NameError.new("Run block named #{name} already exists!")
         end
-      end
-
-      def run_blocks
-        @run_blocks ||= Hash.new
       end
     end
 

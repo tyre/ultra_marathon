@@ -27,11 +27,18 @@ module UltraMarathon
     # SubRunner in context of itself.
     # SubContext is necessary because we want to run in the context of the
     # other class, but do other things (like log) in the context of this one.
+    #
+    # Options:
+    #
+    #   instrumet: Whether to log instrumentation - defaults to false
+    #
     def initialize(options, run_block_or_sub_context)
       @run_block_or_sub_context = run_block_or_sub_context
       @name = options[:name]
       @options = {
-        instrument: false
+        instrument: false,
+        threaded: false,
+        timeout: 100
       }.merge(options)
     end
 
@@ -47,6 +54,16 @@ module UltraMarathon
         end
       end
       log_instrumentation
+      self
+    end
+
+    # Returns a thread wrapping #run!
+    def run_thread
+      @thread ||= Thread.new { run! }
+    end
+
+    def threaded?
+      options[:threaded]
     end
 
     def log_instrumentation

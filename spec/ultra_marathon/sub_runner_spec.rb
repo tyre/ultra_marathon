@@ -28,13 +28,17 @@ describe UltraMarathon::SubRunner do
   let(:name) { :frank }
   let(:context) { test_class.new }
 
-  context '#run' do
+  context '#run!' do
     let(:run_block) { ->{ increment_bubbles } }
     subject { test_instance.run! }
 
     it 'runs in the context that was passed in' do
       subject
       context.bubble_count.should be 1
+    end
+
+    it 'returns itself' do
+      subject.should be test_instance
     end
 
     it 'starts the logs with its name' do

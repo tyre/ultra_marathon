@@ -1,3 +1,4 @@
+require 'timeout'
 require 'spec_helper'
 
 describe UltraMarathon::CollectionRunner do
@@ -79,6 +80,26 @@ describe UltraMarathon::CollectionRunner do
       it 'should correctly set the sub_runner names as requested' do
         run_collection
         test_instance.logger.contents.should include "Running 'Sector49' SubRunner"
+      end
+    end
+
+    context 'passing threaded: true', slow: true do
+      let(:options) { { name: :threaded, threaded: true } }
+      let(:collection) { 0...100 }
+      let(:run_block) { proc { |n| sleep(0.01) } }
+
+      # Run 100 blocks that each sleep for a hundredth of a second.
+      # The timeout can cause flakiness, but all we really care about is that
+      # it runs in under a second, implying that it is either running the threads
+      # or maybe failing and not doing anything. Other tests should control for
+      # the latter scenario.
+
+      it 'should run concurrently' do
+        expect do
+          Timeout::timeout(0.5) do
+            run_collection
+          end
+        end.to_not raise_error
       end
     end
   end

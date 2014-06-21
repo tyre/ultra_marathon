@@ -6,7 +6,8 @@ require 'ultra_marathon/sub_runner'
 
 module UltraMarathon
   class CollectionRunner < BaseRunner
-    attr_reader :collection, :options, :run_block
+    attr_reader :collection, :options, :run_block, :name
+    attr_memo_reader :sub_runner_class, -> { options[:sub_runner].try_call }
 
     after_run :write_logs
     instrumentation_prefix lambda { |collection| "collection.#{collection.name}." }
@@ -27,12 +28,15 @@ module UltraMarathon
     #             to batch queries
     #             Defaults to :each
     #
+    # threaded:   Run each iteration in its own thread
     def initialize(collection, options={}, &run_block)
       @collection, @run_block = collection, run_block
+      @name = options[:name]
       @options = {
         sub_name: proc { |index| :"#{options[:name]}__#{index}" },
         sub_runner: SubRunner,
-        iterator:   :each
+        iterator:   :each,
+        threaded: false
       }.merge(options)
     end
 
@@ -68,11 +72,6 @@ module UltraMarathon
       logger.info "Running Collection #{options[:name]}"
     end
 
-    # Cache the sub runner class
-    def sub_runner_class
-      @individual_runner_class ||= options[:sub_runner].try_call
-    end
-
     def new_item_sub_runner(item, index)
       item_options = sub_runner_item_options(item, index)
       item_sub_context = build_item_sub_context(item, item_options)
@@ -83,12 +82,14 @@ module UltraMarathon
     # want
     def sub_runner_base_options
       {
-        context: options[:context] || self
+        context: options[:context] || self,
+        threaded: options[:threaded]
       }
     end
 
     def sub_runner_item_options(item, index)
-      sub_runner_base_options.merge(name: options[:sub_name].try_call(index, item))
+      name = options[:sub_name].try_call(index, item)
+      sub_runner_base_options.merge(name: name)
     end
 
     def build_item_sub_context(item, options)

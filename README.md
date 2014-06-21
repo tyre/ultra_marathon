@@ -86,6 +86,59 @@ In this instance, `bubbles` will not be run until `don_scuba_gear` successfully
 finishes. If `don_scuba_gear` explicitly fails, such as by raising an error,
 `bubbles` will never be run.
 
+### Collections
+
+Sometimes you want to run a given run block once for each of a given set. Just
+pass the `:collection` option and all of your dreams will come true. Each
+iteration will be passed one item along with the index.
+
+```ruby
+class RangeRunner < UltraMarathon::AbstractRunner
+
+  run :counting!, collection: (1..100) do |number, index|
+    if index == 0
+      puts "We start with #{number}"
+    else
+      puts "And then comes #{number}"
+    end
+  end
+
+end
+```
+
+The only requirement is that the `:collection` option responds to #each. But
+what if it doesn't? Just pass in the `:iterator` option! This option was added
+specifically for Rails ActiveRecord::Association instances that can fetch in
+batches using `:for_each`
+
+```ruby
+# Crow inherits from ActiveRecord::Base
+
+class MurderRunner < UltraMarathon::AbstractRunner
+
+  run :coming_of_age, collection: Crow.unblessed.where(age: 10) do |youngster_crow|
+    youngster_crow.update_attribute(blessed: true)
+  end
+
+end
+
+```
+
+### Threading
+
+Passing `threaded: true` will run that run block in its own thread. This is particularly useful for collections or run blocks which contain external API calls, hit a database, or any other candidate for concurrency.
+
+```ruby
+class NapRunner < UltraMarathon::AbstractRunner
+  run :mass_nap, collection: (1..100), threaded: true do
+    sleep(0.01)
+  end
+end
+
+# nap_runner = NapRunner.new
+# nap_runner.run!
+```
+
 ### Callbacks
 
 `UltraMarathon::AbstractRunner` includes numerous life-cycle callbacks for
