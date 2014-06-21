@@ -4,7 +4,7 @@ require 'ultra_marathon/logging'
 
 module UltraMarathon
   class BaseRunner
-    RUN_INSTRUMENTATION_NAME = :__run!
+    RUN_INSTRUMENTATION_NAME = '__run!'.freeze
     include Logging
     include Instrumentation
     include Callbacks
@@ -28,7 +28,7 @@ module UltraMarathon
             invoke_on_error_callbacks(error)
           end
         end
-        invoke_after_run_callbacks rescue nil
+        invoke_after_run_callbacks
         self
       end
     end
@@ -86,12 +86,12 @@ module UltraMarathon
     # on its success or failure and removes it from the unrun_sub_runners
     def run_sub_runner(sub_runner)
       sub_runner.run!
-      logger.info sub_runner.logger.contents
       if sub_runner.success
         successful_sub_runners << sub_runner
       else
         failed_sub_runners << sub_runner
       end
+      instrumentations.merge!(sub_runner.instrumentations)
       unrun_sub_runners.delete sub_runner.name
     end
 
@@ -115,6 +115,91 @@ module UltraMarathon
       successful_sub_runners.includes_all?(sub_runner.parents)
     end
 
+    def status
+      if success?
+        'Success'
+      else
+        'Failure'
+      end
+    end
 
+    def log_all_sub_runners
+      log_failed_sub_runners if failed_sub_runners.any?
+      log_successful_sub_runners if successful_sub_runners.any?
+    end
+
+    def log_failed_sub_runners
+      logger.info """
+
+      == Failed SubRunners ==
+
+      """
+      log_sub_runners(failed_sub_runners)
+    end
+
+    def log_successful_sub_runners
+      logger.info """
+
+      == Successful SubRunners ==
+
+      """
+      log_sub_runners(successful_sub_runners)
+    end
+
+
+    def log_sub_runners(sub_runners)
+      sub_runners.each do |sub_runner|
+        logger.info(sub_runner.logger.contents << "\n")
+      end
+    end
+
+    def log_summary
+      run_profile = instrumentations[:run!]
+      failed_names = failed_sub_runners.names.map(&:to_s).join(', ')
+      succcessful_names = successful_sub_runners.names.map(&:to_s).join(', ')
+      unrun_names = unrun_sub_runners.names.map(&:to_s).join(', ')
+      logger.info """
+
+      Status: #{status}
+
+      Failed (#{failed_sub_runners.size}): #{failed_names}
+      Successful (#{successful_sub_runners.size}): #{succcessful_names}
+      Unrun (#{unrun_sub_runners.size}): #{unrun_names}
+
+      #{time_summary}
+
+      """
+    end
+
+    def sub_runner_instrumentations
+      @sub_runner_instrumentations ||= begin
+        sub_runner_profiles = instrumentations.select do |profile|
+          profile.name.to_s.start_with? 'sub_runner.'
+        end
+        UltraMarathon::Instrumentation::Store.new(sub_runner_profiles)
+      end
+    end
+
+    def time_summary
+      """
+      Run Start Time: #{run_instrumentation.formatted_start_time}
+      End Time: #{run_instrumentation.formatted_end_time}
+      Total Time: #{run_instrumentation.formatted_total_time}
+
+      #{sub_runner_summary}
+      """
+    end
+
+    def sub_runner_summary
+      median_profile = sub_runner_instrumentations.median
+      max_profile = sub_runner_instrumentations.max
+      min_profile = sub_runner_instrumentations.min
+      """
+      Max SubRunner Runtime: #{max_profile.name} (#{max_profile.total_time})
+      Min SubRunner Runtime: #{min_profile.name} (#{min_profile.total_time})
+      Median SubRunner Runtime: #{median_profile.name} (#{median_profile.total_time})
+      SubRunner Runtime Standard Deviation: #{sub_runner_instrumentations.standard_deviation}
+      """
+    end
   end
 end

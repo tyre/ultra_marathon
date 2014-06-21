@@ -69,36 +69,21 @@ module UltraMarathon
 
     # Creates a new sub runner, defaulting the context to `self`
     def new_sub_runner(options, block)
-      defaults = {
-        context: self
-      }
-      options = defaults.merge(options)
-      SubRunner.new(options, block)
+      options = {
+        context: self,
+        collection: false
+      }.merge(options)
+      if options[:collection]
+        CollectionRunner.new(options.delete(:collection), options, &block)
+      else
+        SubRunner.new(options, block)
+      end
     end
 
     def write_log
-      logger.info summary
+      log_all_sub_runners
+      log_summary
     end
 
-    def summary
-      """
-
-      Status: #{status}
-      Run Start Time: #{run_instrumentation.formatted_start_time}
-      End Time: #{run_instrumentation.formatted_end_time}
-      Total Time: #{run_instrumentation.formatted_total_time}
-
-      Successful SubRunners: #{successful_sub_runners.size}
-      Failed SubRunners: #{failed_sub_runners.size}
-      """
-    end
-
-    def status
-      if success?
-        'Success'
-      else
-        'Failure'
-      end
-    end
   end
 end

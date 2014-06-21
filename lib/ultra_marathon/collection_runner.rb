@@ -1,3 +1,4 @@
+require 'set'
 require 'ultra_marathon/base_runner'
 require 'ultra_marathon/store'
 require 'ultra_marathon/sub_context'
@@ -8,6 +9,7 @@ module UltraMarathon
     attr_reader :collection, :options, :run_block
 
     after_run :write_logs
+    instrumentation_prefix lambda { |collection| "collection.#{collection.name}." }
 
     # Takes a collection, each of which will be run in its own subrunner. The collection
     # Also takes a number of options:
@@ -58,54 +60,12 @@ module UltraMarathon
 
     def write_logs
       log_header
-      log_failed_sub_runners if failed_sub_runners.any?
-      log_successful_sub_runners if successful_sub_runners.any?
+      log_all_sub_runners
       log_summary
     end
 
-    def log_summary
-      run_profile = instrumentations[:run!]
-      """
-
-      Status: #{status}
-      Run Start Time: #{run_instrumentation.formatted_start_time}
-      End Time: #{run_instrumentation.formatted_end_time}
-      Total Time: #{run_instrumentation.formatted_total_time}
-
-      Failed: #{failed_sub_runners.size}
-      Successful: #{successful_sub_runners.size}
-
-      """
-    end
-
     def log_header
-      logger.info """
-
-      Running Collection #{options[:name]}
-
-      """
-    end
-
-    def status
-      if success?
-        'Success'
-      else
-        'Failure'
-      end
-    end
-
-    def log_failed_sub_runners
-      log_sub_runners(failed_sub_runners)
-    end
-
-    def log_successful_sub_runners
-      log_sub_runners(successful_sub_runners)
-    end
-
-    def log_sub_runners(sub_runners)
-      sub_runners.each do |sub_runner|
-        logger.info(sub_runner.logger.contents << "\n")
-      end
+      logger.info "Running Collection #{options[:name]}"
     end
 
     # Cache the sub runner class
@@ -128,7 +88,7 @@ module UltraMarathon
     end
 
     def sub_runner_item_options(item, index)
-      sub_runner_base_options.merge(name: options[:sub_name].try_call(index))
+      sub_runner_base_options.merge(name: options[:sub_name].try_call(index, item))
     end
 
     def build_item_sub_context(item, options)

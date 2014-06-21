@@ -14,10 +14,14 @@ module UltraMarathon
     attr_reader :options, :name, :run_block_or_sub_context
 
     callbacks :before_run, :after_run, :on_error, :on_reset
-    after_run :log_header_and_sub_context
+
+    before_run lambda { logger.info log_header }
+    after_run lambda { logger.info sub_context.logger.contents }
 
     on_error lambda { self.success = false }
-    on_error lambda { |error| logger.error error }
+    on_error lambda { |error| logger.error(error) }
+
+    instrumentation_prefix lambda { |sub_runner| "sub_runner.#{sub_runner.name}." }
 
     # The :context option is required, because you'll never want to run a
     # SubRunner in context of itself.
@@ -32,7 +36,7 @@ module UltraMarathon
     end
 
     def run!
-      instrument(:run) do
+      instrument('__run!') do
         begin
           self.success = true
           run_sub_context
@@ -47,7 +51,7 @@ module UltraMarathon
 
     def log_instrumentation
       if options[:instrument]
-        run_profile = instrumentations[:run]
+        run_profile = instrumentations['__run!']
         logger.info """
         End Time: #{run_profile.formatted_end_time}
         Start Time: #{run_profile.formatted_start_time}
@@ -82,15 +86,6 @@ module UltraMarathon
     def run_sub_context
       invoke_before_run_callbacks
       sub_context.call
-    end
-
-    def log_header_and_sub_context
-      logger.info log_header
-      log_sub_context
-    end
-
-    def log_sub_context
-      logger.info sub_context.logger.contents
     end
 
     def log_header

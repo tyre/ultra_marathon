@@ -1,7 +1,7 @@
 require 'spec_helper'
 describe UltraMarathon::Instrumentation::Profile do
-  let(:start_time) { Time.local(1991, 1, 31, 15, 15, 00) }
-  let(:end_time) { Time.local(1991, 1, 31, 16, 00, 20) }
+  let(:start_time) { Time.local(1991, 1, 31, 15, 15, 00, 0) }
+  let(:end_time) { Time.local(1991, 1, 31, 16, 00, 20, 0) }
   let(:run_block) do
     # This is going to be evaluated in context of the instance
     # so we need to wrap in an IIF to access `end_time`
@@ -44,7 +44,8 @@ describe UltraMarathon::Instrumentation::Profile do
     before(:each) { run }
 
     it 'should return the total seconds elapsed' do
-      profile.total_time.should eq 2720
+      #Rounding because floats are a pain in the ass
+      profile.total_time.round(3).should eq (end_time - start_time).round(3)
     end
   end
 
@@ -52,7 +53,7 @@ describe UltraMarathon::Instrumentation::Profile do
     before(:each) { run }
 
     it 'should return the total time, formatted' do
-      profile.formatted_total_time.should eq '00:45:20'
+      profile.formatted_total_time.should eq '00:45:20:000'
     end
   end
 end

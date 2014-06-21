@@ -15,7 +15,7 @@ describe UltraMarathon::CollectionRunner do
         proc { |item| logger.info("Chillin with homie #{item}")}
       end
 
-      it 'should run run each member of the collection' do
+      it 'should run each member of the collection' do
         run_collection
         collection.each do |item|
           sub_log = "Chillin with homie #{item}\n"
@@ -33,7 +33,52 @@ describe UltraMarathon::CollectionRunner do
         it 'should not raise an error and set success to false' do
           expect { run_collection }.to_not raise_error
           test_instance.success.should be false
+          test_instance.failed_sub_runners.length.should be 2
+          test_instance.successful_sub_runners.length.should be 3
         end
+      end
+    end
+
+    context 'with multiple arguments' do
+      let(:collection) { [['Cassidy', 'Clay'], ['Tom', 'Jerry']] }
+      let(:run_block) do
+        proc { |homie1, homie2| logger.info("Chillin with homie #{homie1} & #{homie2}") }
+      end
+
+      it 'should run each member of the collection' do
+        run_collection
+        collection.each do |(homie1, homie2)|
+          sub_log = "Chillin with homie #{homie1} & #{homie2}\n"
+          test_instance.logger.contents.should include sub_log
+        end
+      end
+    end
+
+    context 'with a different iterator' do
+      let(:number_array_class) do
+        anonymous_test_class(Array) do
+          def each_odd(&block)
+            select(&:odd?).each(&block)
+          end
+        end
+      end
+      let(:collection) { number_array_class.new([1,2,3,4,5,6]) }
+      let(:run_block) { proc { |odd_number| logger.info "#{odd_number} is an odd number!" } }
+      let(:options) { { name: :this_is_odd, iterator: :each_odd } }
+
+      it 'should use that iterator' do
+        run_collection
+        test_instance.logger.contents.should_not include "2 is an odd number!"
+      end
+    end
+
+    context 'with a custom naming convention' do
+      let(:options) { { name: :jimmy, sub_name: proc { |index, item| 'Sector' << (item ** 2).to_s } } }
+      let(:collection) { [ 2, 4, 7] }
+
+      it 'should correctly set the sub_runner names as requested' do
+        run_collection
+        test_instance.logger.contents.should include "Running 'Sector49' SubRunner"
       end
     end
   end
