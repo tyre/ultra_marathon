@@ -33,8 +33,8 @@ module UltraMarathon
           end
         end
         invoke_after_run_callbacks
-        self
       end
+      self
     end
 
     def success?
@@ -63,16 +63,17 @@ module UltraMarathon
     # If any one of the parents has failed, considers the runner a failure
     # If some parents have not yet completed, carries on
     def run_unrun_sub_runners
-      unrun_sub_runners.each do |sub_runner|
-        if sub_runner_can_run? sub_runner
-          run_sub_runner sub_runner
-        elsif sub_runner.parents.any? { |name| failed_sub_runners.exists? name }
-          failed_sub_runners << sub_runner
-          unrun_sub_runners.delete sub_runner.name
+      until complete?
+        unrun_sub_runners.each do |sub_runner|
+          if sub_runner_can_run? sub_runner
+            run_sub_runner sub_runner
+          elsif sub_runner.parents.any? { |name| failed_sub_runners.exists? name }
+            failed_sub_runners << sub_runner
+            unrun_sub_runners.delete sub_runner.name
+          end
         end
+        clean_up_threaded_runners if threaded_runners.any?
       end
-      clean_up_threaded_runners if threaded_runners.any?
-      run_unrun_sub_runners unless complete?
     end
 
     # Either explicitly runs the sub runner or, if it is threaded, starts its
@@ -199,7 +200,7 @@ module UltraMarathon
       End Time: #{run_instrumentation.formatted_end_time}
       Total Time: #{run_instrumentation.formatted_total_time}
 
-      #{sub_runner_summary}
+      #{sub_runner_summary if sub_runner_instrumentations.any?}
       """
     end
 

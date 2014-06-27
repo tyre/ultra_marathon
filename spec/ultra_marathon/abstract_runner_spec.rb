@@ -50,6 +50,26 @@ describe UltraMarathon::AbstractRunner do
           test_instance.success.should_not be
         end
       end
+
+      context 'with a collection' do
+        let(:test_class) do
+          anonymous_test_class(UltraMarathon::AbstractRunner) do
+            run :calculate_squares, collection: [1,2,3,4] do |n|
+              squares << (n ** 2)
+            end
+
+            def squares
+              @squares ||= []
+            end
+          end
+        end
+
+        it 'should run successfully' do
+          subject
+          test_instance.should be_success
+        end
+
+      end
     end
 
     describe 'with multiple run blocks' do
@@ -119,6 +139,7 @@ describe UltraMarathon::AbstractRunner do
           end
         end
       end
+
     end
   end
 

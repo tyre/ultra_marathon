@@ -135,9 +135,47 @@ class NapRunner < UltraMarathon::AbstractRunner
   end
 end
 
-# nap_runner = NapRunner.new
-# nap_runner.run!
 ```
+
+#### Example
+
+As we will see in the example below, for longer-running processes that Ruby can run concurrently, threading is a muy bueno idea.
+
+
+```ruby
+require 'benchmark'
+require 'ultra_marathon'
+
+class ThreadedNapRunner < UltraMarathon::AbstractRunner
+  run :mass_nap, collection: (1..100), threaded: true do |n|
+    sleep(1)
+  end
+end
+
+class UnthreadedNapRunner < UltraMarathon::AbstractRunner
+  run :mass_nap, collection: (1..100), threaded: false do |n|
+    sleep(1)
+  end
+end
+
+Benchmark.bmbm do |reporter|
+  reporter.report(:threaded) { ThreadedNapRunner.new.run! }
+  reporter.report(:unthreaded) { UnthreadedNapRunner.new.run! }
+end
+
+# Rehearsal ----------------------------------------------
+# threaded     1.270000   0.080000   1.350000 (  1.346384)
+# unthreaded   0.060000   0.010000   0.070000 (100.141031)
+# ------------------------------------- total: 1.420000sec
+#
+#                  user     system      total        real
+# threaded     1.320000   0.060000   1.380000 (  1.377940)
+# unthreaded   0.060000   0.000000   0.060000 (100.128980)
+```
+
+Note, however, that threading is not free. In the final benchmark, we would expect a runtime of ~1 second but saw over a third of a second slower. If we run the same test with a run block of `(n * 10_000).times { 'derp' }`, for example, the unthreaded version is about 10% faster.
+
+tl;dr don't thread because it sounds cool. Use it when you need it.
 
 ### Callbacks
 

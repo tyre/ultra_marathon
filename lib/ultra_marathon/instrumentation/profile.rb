@@ -8,6 +8,8 @@ module UltraMarathon
 
       ## Public Instance Methods
 
+      # @param name [String] name of the instrumented block
+      # @param block [Proc] block to be instrumented
       def initialize(name, &block)
         @name = name
         # Ruby cannot marshal procs or lambdas, so we need to define a method.
@@ -16,6 +18,8 @@ module UltraMarathon
         end
       end
 
+      # Sets {#start_time}, runs the initialized block, then sets {#end_time}
+      # @return [Object] the return value of the initialized block
       def call
         @start_time = Time.now
         begin
@@ -26,32 +30,36 @@ module UltraMarathon
         return_value
       end
 
-      # returns the total time in seconds (including fractional seconds to the nanosecond)
+      # @return [Float] the total time in seconds to the nanosecond
       def total_time
         @total_time ||= end_time - start_time
       end
 
-      # Returns the total time formatted per RAW_TIME_FORMAT
+      # @return [String] {#total_time} formatted per {RAW_TIME_FORMAT}
       def formatted_total_time
         format_seconds(total_time)
       end
 
-      # Returns the start time formatted per DATETIME_FORMAT
+      # @return [String] {#start_time} formatted per {DATETIME_FORMAT}
       def formatted_start_time
         format_time(start_time)
       end
 
-      # Returns the end time formatted per DATETIME_FORMAT
+      # @return [String] {#end_time} formatted per {DATETIME_FORMAT}
       def formatted_end_time
         format_time(end_time)
       end
 
-      # Comparison delegated to the Profile#total_time
+      # Comparison delegated to {#total_time}
+      # @param other_profile [Profile]
+      # @return [Integer] {#total_time} <=> other_profile.total_time
       def <=>(other_profile)
         total_time <=> other_profile.total_time
       end
 
       # Profiles are considered equal if their names are `eql?`
+      # @param other_profile [Profile]
+      # @return [Boolean] delegates to {#name}
       def eql?(other_profile)
         name.eql? other_profile.name
       end

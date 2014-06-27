@@ -19,22 +19,21 @@ module UltraMarathon
       # Called in the class context, it will be safely executed in
       # the context of the instance.
       #
-      # E.g.
+      # @example
+      #  class BubblesRunner < AbstractRunner
+      #    run do
+      #      fire_the_missiles
+      #      take_a_nap
+      #    end
       #
-      # class BubblesRunner < AbstractRunner
-      #   run do
-      #     fire_the_missiles
-      #     take_a_nap
-      #   end
+      #    def fire_the_missiles
+      #      puts 'But I am le tired'
+      #    end
       #
-      #   def fire_the_missiles
-      #     puts 'But I am le tired'
-      #   end
-      #
-      #   def take_a_nap
-      #     puts 'zzzzzz'
-      #   end
-      # end
+      #    def take_a_nap
+      #      puts 'zzzzzz'
+      #    end
+      #  end
       #
       #  BubblesRunner.new.run!
       #  # => 'But I am le tired'
@@ -47,6 +46,11 @@ module UltraMarathon
         else
           raise NameError.new("Run block named #{name} already exists!")
         end
+      end
+
+      def run_collection(name=:main, items=[], options={}, &block)
+        options.merge!(collection: true, items: items)
+        run(name, options, &block)
       end
     end
 
@@ -67,10 +71,11 @@ module UltraMarathon
     def new_sub_runner(options, block)
       options = {
         context: self,
-        collection: false
+        collection: false,
+        items: []
       }.merge(options)
       if options[:collection]
-        CollectionRunner.new(options.delete(:collection), options, &block)
+        CollectionRunner.new(options.delete(:items), options, &block)
       else
         SubRunner.new(options, block)
       end

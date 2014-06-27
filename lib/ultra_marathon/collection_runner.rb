@@ -53,6 +53,10 @@ module UltraMarathon
       end
     end
 
+    def threaded?
+      false
+    end
+
     # Set of all sub runners that should be run before this one.
     # This class cannot do anything with this information, but it is useful
     # to the enveloping runner.
@@ -93,9 +97,11 @@ module UltraMarathon
     end
 
     def build_item_sub_context(item, options)
-      SubContext.new(options[:context]) do
-        instance_exec(*item, &run_block)
-      end
+      Proc.new do |run_block|
+        SubContext.new(options[:context]) do
+          instance_exec(*item, &run_block)
+        end
+      end.call(run_block)
     end
   end
 end
