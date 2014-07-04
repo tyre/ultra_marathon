@@ -1,10 +1,27 @@
+require 'ostruct'
 require 'spec_helper'
-require 'rspec/mocks'
 
 describe UltraMarathon::Instrumentation::Store do
 
   let(:profiles) { [] }
   let(:test_instance) { described_class.new(profiles) }
+  let(:profile_double_class) do
+    anonymous_test_class(OpenStruct) do
+      def initialize(name, attributes={})
+        @name = name
+        super(attributes)
+      end
+
+      def <=>(other_profile_double)
+        total_time <=> other_profile_double.total_time
+      end
+    end
+  end
+
+  def profile_double(*args)
+    profile_double_class.new(*args)
+  end
+
 
   describe 'calculation methods' do
     let(:min_profile) { profile_double(:min_profile, total_time: 1) }
@@ -53,14 +70,4 @@ describe UltraMarathon::Instrumentation::Store do
       end
     end
   end
-end
-
-class ProfileDouble < RSpec::Mocks::Mock
-  def <=>(other_profile_double)
-    total_time <=> other_profile_double.total_time
-  end
-end
-
-def profile_double(*args)
-  ProfileDouble.new(*args)
 end
