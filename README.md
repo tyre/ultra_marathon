@@ -1,4 +1,5 @@
 # UltraMarathon
+[![Build Status](https://travis-ci.org/tyre/ultra_marathon.svg?branch=master)](https://travis-ci.org/tyre/ultra_marathon)
 
 Fault tolerant platform for long running jobs.
 
