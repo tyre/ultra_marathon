@@ -80,7 +80,7 @@ module UltraMarathon
     end
 
     # If {#threaded?}, returns if the run_thread is alive. Otherwise false.
-    # @returns [Boolean] whether the SubRunner is currently executing {#run!}
+    # @return [Boolean] whether the SubRunner is currently executing {#run!}
     def running?
       if threaded?
         run_thread && run_thread.alive?

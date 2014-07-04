@@ -83,23 +83,13 @@ describe UltraMarathon::CollectionRunner do
       end
     end
 
-    context 'passing threaded: true', slow: true do
+    context 'passing threaded: true' do
       let(:options) { { name: :threaded, threaded: true } }
-      let(:collection) { 0...100 }
+      let(:collection) { 0...10 }
       let(:run_block) { proc { |n| sleep(0.01) } }
 
-      # Run 100 blocks that each sleep for a hundredth of a second.
-      # The timeout can cause flakiness, but all we really care about is that
-      # it runs in under a second, implying that it is either running the threads
-      # or maybe failing and not doing anything. Other tests should control for
-      # the latter scenario.
-
-      it 'should run concurrently' do
-        expect do
-          Timeout::timeout(0.5) do
-            run_collection
-          end
-        end.to_not raise_error
+      it 'should generate threaded subrunners' do
+        test_instance.send(:unrun_sub_runners).all?(&:threaded?).should be true
       end
     end
   end

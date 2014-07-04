@@ -5,10 +5,11 @@ describe UltraMarathon::AbstractRunner do
   let(:test_instance) { test_class.new }
 
   describe '#run!' do
+    let(:run_options) { Hash.new }
     subject { test_instance.run! }
 
     describe 'with one run block' do
-      before(:each) { test_class.send :run, &run_block }
+      before(:each) { test_class.send :run, :main, run_options, &run_block }
 
       context 'when everything is fine' do
         let(:run_block) { Proc.new { logger.info 'Look at me go!' } }
@@ -50,26 +51,35 @@ describe UltraMarathon::AbstractRunner do
           test_instance.success.should_not be
         end
       end
+    end
 
-      context 'with a collection' do
-        let(:test_class) do
-          anonymous_test_class(UltraMarathon::AbstractRunner) do
-            run :calculate_squares, collection: [1,2,3,4] do |n|
-              squares << (n ** 2)
-            end
-
-            def squares
-              @squares ||= []
-            end
+    context 'with a collection' do
+      let(:items) { [1,2,3,4] }
+      let(:run_block) do
+        Proc.new do |n|
+          squares << (n ** 2)
+        end
+      end
+      let(:test_class) do
+        anonymous_test_class(UltraMarathon::AbstractRunner) do
+          def squares
+            @squares ||= []
           end
         end
-
-        it 'should run successfully' do
-          subject
-          test_instance.should be_success
-        end
-
       end
+
+      before(:each) { test_instance.class.send :run_collection, :main, items, run_options, &run_block }
+
+      it 'should run successfully' do
+        subject
+        test_instance.should be_success
+      end
+
+      it 'should execute the run blocks in the context of the test class' do
+        subject
+        test_instance.squares.sort.should eq [1,4,9,16]
+      end
+
     end
 
     describe 'with multiple run blocks' do

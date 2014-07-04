@@ -10,7 +10,7 @@ module UltraMarathon
     include Callbacks
 
     attr_accessor :success
-    attr_memo_accessor :threaded_runners, -> { [] }
+    attr_memo_accessor :running_sub_runners, -> { Store.new }
     attr_memo_reader :successful_sub_runners, -> { Store.new }
     attr_memo_reader :failed_sub_runners, -> { Store.new }
 
@@ -66,25 +66,23 @@ module UltraMarathon
       until complete?
         unrun_sub_runners.each do |sub_runner|
           if sub_runner_can_run? sub_runner
-            run_sub_runner sub_runner
+            running_sub_runners << sub_runner.run!
           elsif sub_runner.parents.any? { |name| failed_sub_runners.exists? name }
             failed_sub_runners << sub_runner
             unrun_sub_runners.delete sub_runner.name
           end
         end
-        clean_up_threaded_runners if threaded_runners.any?
+        clean_up_completed_sub_runners
       end
     end
 
-    # Either explicitly runs the sub runner or, if it is threaded, starts its
-    # thread
-    def run_sub_runner(sub_runner)
-      if sub_runner.threaded?
-        self.threaded_runners << sub_runner.run_thread
-      else
-        sub_runner.run!
+    # Cleans up all dead threads, settings
+    def clean_up_completed_sub_runners
+      completed_runners, unfinished_runners = running_sub_runners.partition(&:complete?)
+      completed_runners.each do |sub_runner|
         clean_up_sub_runner(sub_runner)
       end
+      self.running_sub_runners = unfinished_runners
     end
 
     # Adds a run sub runner to the appropriate sub runner store based
@@ -100,22 +98,13 @@ module UltraMarathon
       unrun_sub_runners.delete sub_runner.name
     end
 
-    # Cleans up all dead threads, settings
-    def clean_up_threaded_runners
-      alive_threads, dead_threads = threaded_runners.partition(&:alive?)
-      dead_threads.each do |thread|
-        clean_up_sub_runner(thread.value)
-      end
-      self.threaded_runners = alive_threads
-    end
-
     ## TODO: timeout option
     def complete?
-      self.threaded_runners.empty? && unrun_sub_runners.empty?
+      running_sub_runners.empty? && unrun_sub_runners.empty?
     end
 
     # Resets all failed sub runners, then sets them as
-    # @unrun_sub_runners and @failed_sub_runners to an empty Store
+    # unrun_sub_runners and failed_sub_runners to an empty Store
     def reset_failed_runners
       failed_sub_runners.each(&:reset)
       @unrun_sub_runners = failed_sub_runners

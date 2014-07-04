@@ -116,7 +116,7 @@ batches using `:for_each`
 
 class MurderRunner < UltraMarathon::AbstractRunner
 
-  run :coming_of_age, collection: Crow.unblessed.where(age: 10) do |youngster_crow|
+  run :coming_of_age, collection: Crow.unblessed.where(age: 10), iterator: :for_each do |youngster_crow|
     youngster_crow.update_attribute(blessed: true)
   end
 
@@ -147,13 +147,13 @@ require 'benchmark'
 require 'ultra_marathon'
 
 class ThreadedNapRunner < UltraMarathon::AbstractRunner
-  run :mass_nap, collection: (1..100), threaded: true do |n|
+  run_collection :mass_nap, items: (1..100), threaded: true do |n|
     sleep(1)
   end
 end
 
 class UnthreadedNapRunner < UltraMarathon::AbstractRunner
-  run :mass_nap, collection: (1..100), threaded: false do |n|
+  run_collection :mass_nap, items: (1..100), threaded: false do |n|
     sleep(1)
   end
 end
@@ -274,6 +274,6 @@ class WatRunner < UltraMarathon::AbstractRunner
 end
 
 WatRunner.run!.reset.run!
-#=> boom
+#=> wrong
 #=> all is well in the universe
 ```

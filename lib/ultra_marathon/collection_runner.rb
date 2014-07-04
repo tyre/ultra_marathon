@@ -57,6 +57,10 @@ module UltraMarathon
       false
     end
 
+    def complete?
+      unrun_sub_runners.empty? && running_sub_runners.empty?
+    end
+
     # Set of all sub runners that should be run before this one.
     # This class cannot do anything with this information, but it is useful
     # to the enveloping runner.

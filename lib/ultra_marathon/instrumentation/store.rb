@@ -75,7 +75,7 @@ module UltraMarathon
 
       # Adds all profiles from the other_store
       # @param other_store [UltraMarathon::Instrumentation::Profile]
-      # @returns [self] the other_store
+      # @return [self] the other_store
       def merge!(other_store)
         other_store.each do |member|
           add(member)

@@ -1,10 +1,11 @@
 require 'set'
 require 'active_support/concern'
-require 'core_ext/proc'
+require 'ultra_marathon/contexticution'
 
 module UltraMarathon
   module Callbacks
     extend ActiveSupport::Concern
+    include Contexticution
 
     private
 
@@ -15,56 +16,16 @@ module UltraMarathon
     def callback_conditions_met?(options)
       conditions_met = true
       if options.key? :if
-        conditions_met &&= call_proc_or_symbol(options[:if])
+        conditions_met &&= contexticute(options[:if])
       elsif options.key? :unless
-        conditions_met &&= !call_proc_or_symbol(options[:unless])
+        conditions_met &&= !contexticute(options[:unless])
       end
       conditions_met
     end
 
-    # Exectutes the object in the context of the instance,
-    # whether an explicitly callable object or a string/symbol
-    # representation of one
-    def call_proc_or_symbol(object, args=[], options={})
-      options = options.dup
-      options[:context] ||= self
-      bound_proc = bind_to_context(object, options[:context])
-      evaluate_block_with_arguments(bound_proc, args)
-    end
-
-    # Binds a proc to the given context. If a symbol is passed in,
-    # retrieves the bound method.
-    def bind_to_context(symbol_or_proc, context)
-      if symbol_or_proc.is_a?(Symbol)
-        context.method(symbol_or_proc)
-      elsif symbol_or_proc.respond_to? :call
-        symbol_or_proc.bind(context)
-      else
-        raise ArgumentError.new("Cannot bind #{callback.class} to #{context}. Expected callable object or symbol.")
-      end
-    end
-
-    # Applies a block in context with the correct number of arguments.
-    # If there are more arguments than the arity, takes the first n
-    # arguments where (n) is the arity of the block.
-    # If there are the same number of arguments, splats them into the block.
-    # Otherwise throws an argument error.
-    def evaluate_block_with_arguments(block, args)
-      # If block.arity < 0, when a block takes a variable number of args,
-      # the one's complement (-n-1) is the number of required arguments
-      required_arguments = block.arity < 0 ? ~block.arity : block.arity
-      if args.length >= required_arguments
-        if block.arity < 0
-          instance_exec(*args, &block)
-        else
-          instance_exec(*args.first(block.arity), &block)
-        end
-      else
-        raise ArgumentError.new("wrong number of arguments (#{args.size} for #{required_arguments})")
-      end
-    end
-
     module ClassMethods
+      include Contexticution
+
       ## Public Class Methods
 
       # Add one or more new callbacks for class
@@ -113,11 +74,14 @@ module UltraMarathon
       end
 
       # Defines class level accessor that memoizes the set of callbacks
-      # E.g.
+      # @example
+      #   add_callbacks_accessor(:after_save)
       #
-      # def self.after_save_callbacks
-      #   @after_save_callbacks ||= []
-      # end
+      #   # Equivalent to
+      #   #
+      #   # def self.after_save_callbacks
+      #   #   @after_save_callbacks ||= []
+      #   # end
       def add_callbacks_accessor(callback_name)
         accessor_name = "#{callback_name}_callbacks"
         instance_variable_name = :"@#{accessor_name}"
@@ -167,7 +131,7 @@ module UltraMarathon
           callbacks = self.class.send :"#{callback_name}_callbacks"
           callbacks.each do |callback, options|
             next unless callback_conditions_met?(options)
-            call_proc_or_symbol(callback, args, options)
+            contexticute(callback, args, options[:context] || self)
           end
         end
       end
