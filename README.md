@@ -110,15 +110,19 @@ end
 The only requirement is that the `:collection` option responds to #each. But
 what if it doesn't? Just pass in the `:iterator` option! This option was added
 specifically for Rails ActiveRecord::Association instances that can fetch in
-batches using `:for_each`
+batches using `:find_each`
 
 ```ruby
 # Crow inherits from ActiveRecord::Base
 
 class MurderRunner < UltraMarathon::AbstractRunner
 
-  run :coming_of_age, collection: Crow.unblessed.where(age: 10), iterator: :for_each do |youngster_crow|
+  run :coming_of_age, collection: :crows_to_bless, iterator: :find_each do |youngster_crow|
     youngster_crow.update_attribute(blessed: true)
+  end
+  
+  def crows_to_bless
+    Crow.unblessed.where(age: 10)
   end
 
 end
