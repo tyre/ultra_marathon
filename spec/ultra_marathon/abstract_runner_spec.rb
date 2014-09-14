@@ -154,6 +154,7 @@ describe UltraMarathon::AbstractRunner do
   end
 
   describe 'callbacks' do
+    let(:run_block) { Proc.new { 7 } }
     before(:each) { test_class.send :run, &run_block }
 
     subject { test_instance.run! }
@@ -183,6 +184,17 @@ describe UltraMarathon::AbstractRunner do
         subject
         test_instance.logger.contents.should include 'We have liftoff!'
         test_instance.logger.contents.index('We have liftoff!').should be > test_instance.logger.contents.index('Blastoff!')
+      end
+    end
+
+    describe 'after_initialize callback' do
+      before(:each) do
+        test_class.after_initialize ->{ self.success = 'Pebbles' }
+        test_class.after_initialize ->{ self.success << ' in my shower' }
+      end
+
+      it 'should invoke after_initialize callbacks in order' do
+        test_instance.success.should eq 'Pebbles in my shower'
       end
     end
   end

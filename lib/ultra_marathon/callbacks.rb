@@ -74,6 +74,7 @@ module UltraMarathon
       end
 
       # Defines class level accessor that memoizes the set of callbacks
+      # @param callback_name [String, Symbol]
       # @example
       #   add_callbacks_accessor(:after_save)
       #

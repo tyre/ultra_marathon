@@ -2,7 +2,7 @@ module UltraMarathon
   class Version
     MAJOR = 0 unless defined? MAJOR
     MINOR = 1 unless defined? MINOR
-    PATCH = 9 unless defined? PATCH
+    PATCH = 10 unless defined? PATCH
     PRE = nil unless defined? PRE
 
     class << self

@@ -14,7 +14,15 @@ module UltraMarathon
     attr_memo_reader :successful_sub_runners, -> { Store.new }
     attr_memo_reader :failed_sub_runners, -> { Store.new }
 
-    callbacks :before_run, :after_run, :on_error, :on_reset
+    callbacks :before_run, :after_run, :on_error, :on_reset, :after_initialize
+
+    ## Public Class Methods
+
+    def self.new(*args, &block)
+      super(*args, &block).tap do |instance|
+        instance.send(:invoke_after_initialize_callbacks)
+      end
+    end
 
     ## Public Instance Methods
 
